@@ -16,8 +16,11 @@ import (
 	"github.com/chiragshirsath/cowatch/backend/internal/api/handler"
 	"github.com/chiragshirsath/cowatch/backend/internal/auth"
 	"github.com/chiragshirsath/cowatch/backend/internal/config"
+	"github.com/chiragshirsath/cowatch/backend/internal/media"
+	"github.com/chiragshirsath/cowatch/backend/internal/observability"
 	"github.com/chiragshirsath/cowatch/backend/internal/room"
 	"github.com/chiragshirsath/cowatch/backend/internal/sfu"
+	"github.com/chiragshirsath/cowatch/backend/internal/storage"
 	"github.com/chiragshirsath/cowatch/backend/internal/ws"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -51,13 +54,21 @@ func (a *App) Run() error {
 	roomService := room.NewRoomService(roomRepo, userRepo)
 	chatService := room.NewChatService(chatRepo, roomRepo)
 
+	obsRepo := observability.NewRepository(a.DB)
+	eventAggregator := observability.NewEventAggregator(obsRepo)
+	eventAggregator.Start()
+
 	// 3. Initialize real-time WebSocket engine & SFU media manager
 	hub := ws.NewHub()
 	hub.SetChatService(chatService)
 	hub.SetRoomService(roomService)
+	hub.SetEventAggregator(eventAggregator)
 	sfuMgr := sfu.NewManager()
 	hub.SetSFUManager(sfuMgr)
 	go hub.Run()
+
+	telemetryHub := observability.NewTelemetryHub(hub)
+	go telemetryHub.Run()
 
 	// 4. Initialize HTTP transport handlers
 	isProd := strings.ToLower(a.Config.Environment) == "production"
@@ -65,9 +76,33 @@ func (a *App) Run() error {
 	roomHandler := handler.NewRoomHandler(roomService)
 	wsHandler := handler.NewWSHandler(hub)
 	chatHandler := handler.NewChatHandler(chatService)
+	adminHandler := handler.NewAdminHandler(telemetryHub)
+
+	mediaRepo := media.NewRepository(a.DB)
+	var storageSvc storage.Service
+	minioSvc, err := storage.NewMinioStorage(
+		a.Config.MinioEndpoint,
+		a.Config.MinioRootUser,
+		a.Config.MinioRootPassword,
+		a.Config.MinioBucketName,
+		strings.ToLower(a.Config.MinioUseSSL) == "true",
+	)
+	if err != nil {
+		a.Logger.Error("failed to connect to MinIO object storage; falling back to local filesystem", "error", err)
+		storageSvc, _ = storage.NewLocalStorage(a.Config.StorageDir, a.Config.MediaStreamBaseURL)
+	} else {
+		a.Logger.Info("connected to MinIO object storage successfully", "endpoint", a.Config.MinioEndpoint, "bucket", a.Config.MinioBucketName)
+		storageSvc = minioSvc
+	}
+	mediaProcessor := media.NewProcessor(mediaRepo, storageSvc)
+	mediaService := media.NewService(mediaRepo, storageSvc, mediaProcessor)
+	mediaHandler := handler.NewMediaHandler(mediaService)
+
+	// Reconcile stuck or orphaned transcode jobs from previous server sessions in the background
+	go mediaService.ReconcileOrphanedAssets(context.Background())
 
 	// 5. Register router with wired handlers & middleware
-	router := api.NewRouter(authHandler, authService, roomHandler, roomService, wsHandler, chatHandler)
+	router := api.NewRouter(authHandler, authService, roomHandler, roomService, wsHandler, chatHandler, adminHandler, mediaHandler)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", a.Config.HTTPPort),
@@ -99,7 +134,10 @@ func (a *App) Run() error {
 		a.Logger.Error("server shutdown error", "error", err)
 	}
 
-	a.Logger.Info("shutting down real-time WebSocket hub...")
+	a.Logger.Info("shutting down real-time WebSocket hub, media processor, and analytics worker...")
+	mediaProcessor.Shutdown(shutdownCtx)
+	eventAggregator.Stop()
+	telemetryHub.Stop()
 	hub.Shutdown()
 
 	if a.Redis != nil {
