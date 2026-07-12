@@ -14,10 +14,10 @@ if [ $? != 0 ]; then
     tmux new-session -d -s $SESSION_NAME -n "services" -c "$PWD/backend" "go run ./cmd/server"
 
     # Split horizontally (right half) for the main Frontend (port 5173)
-    tmux split-window -h -t $SESSION_NAME:0 -c "$PWD/frontend" "npm run dev -- --port 5173"
+    tmux split-window -h -t $SESSION_NAME:0 -c "$PWD/frontend" "npm run dev -- --host 0.0.0.0 --port 5173"
 
     # Split the right half vertically (bottom right) for the Admin Portal (port 3000)
-    tmux split-window -v -t $SESSION_NAME:0.1 -c "$PWD/admin-portal" "npm run dev -- --port 3000"
+    tmux split-window -v -t $SESSION_NAME:0.1 -c "$PWD/admin-portal" "npm run dev -- --host 0.0.0.0 --port 3000"
 
     # Set layout so left half is Backend, right half is stacked frontends
     tmux select-layout -t $SESSION_NAME:0 main-vertical
