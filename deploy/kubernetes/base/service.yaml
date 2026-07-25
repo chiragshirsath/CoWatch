@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cowatch-backend-svc
+spec:
+  selector:
+    app: cowatch-backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cowatch-frontend-svc
+spec:
+  selector:
+    app: cowatch-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
