@@ -115,7 +115,7 @@ func TestPlaybackTokenScopeAndExpiry(t *testing.T) {
 }
 
 func TestFetcherEnforcesHostAllowlist(t *testing.T) {
-	f := live.NewFetcher("example.com, stream.test", true)
+	f := live.NewFetcher("example.com, stream.test")
 
 	if err := f.AllowsHost("https://example.com/live.m3u8"); err != nil {
 		t.Errorf("listed host rejected: %v", err)
@@ -134,24 +134,19 @@ func TestFetcherEnforcesHostAllowlist(t *testing.T) {
 	}
 }
 
-func TestFetcherEmptyAllowlistIsClosedInProduction(t *testing.T) {
-	prod := live.NewFetcher("", true)
-	if err := prod.AllowsHost("https://anything.example.com/live.m3u8"); !errors.Is(err, live.ErrHostNotAllowed) {
-		t.Errorf("production with no allowlist must refuse every host, got %v", err)
-	}
-
-	// Outside production an empty list stays open, so local development does not
-	// push operators towards configuring a wildcard they then ship.
-	dev := live.NewFetcher("", false)
-	if err := dev.AllowsHost("https://anything.example.com/live.m3u8"); err != nil {
-		t.Errorf("development with no allowlist should permit public hosts, got %v", err)
+func TestFetcherEmptyAllowlistPermitsPublicHosts(t *testing.T) {
+	// An empty list is open; private addresses are still refused at dial time (see
+	// TestFetcherRefusesPrivateAddresses).
+	f := live.NewFetcher("")
+	if err := f.AllowsHost("https://anything.example.com/live.m3u8"); err != nil {
+		t.Errorf("no allowlist should permit public hosts, got %v", err)
 	}
 }
 
 func TestFetcherRefusesPrivateAddresses(t *testing.T) {
 	// Allowlisted by name, yet still unreachable: the address check runs at dial
 	// time, which is what closes the DNS-rebinding path a name-only check leaves open.
-	f := live.NewFetcher("localhost,metadata.google.internal", false)
+	f := live.NewFetcher("localhost,metadata.google.internal")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

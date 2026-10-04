@@ -153,7 +153,7 @@ func TestFailuresNeverCarryCredentials(t *testing.T) {
 	const secret = "SECRET-TOKEN-123"
 
 	// A transport failure: net/http puts the whole URL in the error.
-	f := NewFetcher("", false) // no loopback exception, so this is refused at dial
+	f := NewFetcher("") // no loopback exception, so this is refused at dial
 	_, err := f.Get(context.Background(), "http://127.0.0.1:1/live/"+secret+"/master.m3u8?token="+secret, nil)
 	if err == nil {
 		t.Fatal("fetch to a blocked address succeeded")

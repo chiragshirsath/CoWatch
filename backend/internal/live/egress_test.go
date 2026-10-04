@@ -38,7 +38,7 @@ func TestEgressProxyRefusesPrivateAddresses(t *testing.T) {
 	defer target.Close()
 
 	// The production guard: no loopback exception.
-	proxy, err := newEgressProxy(NewFetcher("", false).DialContext)
+	proxy, err := newEgressProxy(NewFetcher("").DialContext)
 	if err != nil {
 		t.Fatalf("newEgressProxy: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestEgressProxyCarriesPublicTraffic(t *testing.T) {
 	defer target.Close()
 
 	// Loopback stands in for the public internet here.
-	proxy, err := newEgressProxy(NewFetcher("", false, AllowLoopback()).DialContext)
+	proxy, err := newEgressProxy(NewFetcher("", AllowLoopback()).DialContext)
 	if err != nil {
 		t.Fatalf("newEgressProxy: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestEgressProxyCloseCutsOpenTunnels(t *testing.T) {
 		}
 	}()
 
-	proxy, err := newEgressProxy(NewFetcher("", false, AllowLoopback()).DialContext)
+	proxy, err := newEgressProxy(NewFetcher("", AllowLoopback()).DialContext)
 	if err != nil {
 		t.Fatalf("newEgressProxy: %v", err)
 	}

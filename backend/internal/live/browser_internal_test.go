@@ -27,7 +27,7 @@ func chromiumForTest(t *testing.T, idle time.Duration, concurrency int) *Browser
 	}
 	noSandbox := os.Getenv("LIVE_BROWSER_TEST_SANDBOX") != "true"
 	b := NewBrowser(BrowserConfig{ExecPath: path, MaxConcurrency: concurrency, IdleTimeout: idle, NoSandbox: noSandbox},
-		NewFetcher("", false, AllowLoopback()))
+		NewFetcher("", AllowLoopback()))
 	t.Cleanup(b.Close)
 	return b
 }

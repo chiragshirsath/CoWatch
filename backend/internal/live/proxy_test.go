@@ -137,7 +137,7 @@ func newFakeOrigin(t *testing.T) *fakeOrigin {
 // buildProxy wires a real service and proxy around a fake origin.
 func buildProxy(t *testing.T, origin *fakeOrigin) (*live.Proxy, live.Service) {
 	t.Helper()
-	fetcher := live.NewFetcher("", false, live.AllowLoopback())
+	fetcher := live.NewFetcher("", live.AllowLoopback())
 	repo := &fakeRepo{channels: map[string]*domain.LiveChannel{}}
 	svc := live.NewService(repo, &fakeAssets{}, live.NewRegistry(live.NewDirectResolver()), fetcher, "http://cowatch.test/api/v1/live")
 

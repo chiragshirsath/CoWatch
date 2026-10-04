@@ -12,7 +12,7 @@ import (
 )
 
 func testFetcher() *live.Fetcher {
-	return live.NewFetcher("", false, live.AllowLoopback())
+	return live.NewFetcher("", live.AllowLoopback())
 }
 
 func TestDirectResolverPassesThroughAndAppliesHeaders(t *testing.T) {

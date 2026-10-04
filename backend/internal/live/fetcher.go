@@ -71,19 +71,15 @@ func AllowLoopback() Option {
 
 // NewFetcher builds a guarded HTTP client.
 //
-// An empty allowlist is fatal in production and permissive-but-loud elsewhere: local
-// development would otherwise require operators to enumerate hosts before they can
-// try anything, which reliably teaches people to set the list to a wildcard. Private
-// address ranges stay blocked in both cases -- that guard is never relaxed.
-func NewFetcher(allowedHosts string, isProd bool, opts ...Option) *Fetcher {
+// An empty allowlist permits any public host, loudly: the only people adding
+// channels are the operators in ADMIN_EMAILS, and making them enumerate every CDN
+// edge a source shards across costs more than it protects. Private address ranges
+// stay blocked regardless -- that guard is never relaxed.
+func NewFetcher(allowedHosts string, opts ...Option) *Fetcher {
 	hosts := splitHosts(allowedHosts)
-	allowAny := len(hosts) == 0 && !isProd
-	if len(hosts) == 0 {
-		if isProd {
-			slog.Warn("LIVE_SOURCE_ALLOWED_HOSTS is empty; every live channel resolve and proxy fetch will be refused")
-		} else {
-			slog.Warn("LIVE_SOURCE_ALLOWED_HOSTS is empty; allowing any public host because this is not a production environment. Set it before deploying.")
-		}
+	allowAny := len(hosts) == 0
+	if allowAny {
+		slog.Warn("LIVE_SOURCE_ALLOWED_HOSTS is empty; allowing live sources from any public host")
 	}
 
 	f := &Fetcher{allowedHosts: hosts, allowAny: allowAny}

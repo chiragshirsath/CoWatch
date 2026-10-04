@@ -436,7 +436,7 @@ func TestBrowserTrafficCannotReachPrivateAddresses(t *testing.T) {
 	// Allowlisted by name, as an operator could by mistake. The guard goes by the
 	// address actually dialled, so the page -- and any script on it -- still cannot
 	// reach a loopback service through the browser.
-	guarded := live.NewFetcher("127.0.0.1", false)
+	guarded := live.NewFetcher("127.0.0.1")
 	browser := browserWith(t, guarded)
 
 	_, err := live.NewBrowserResolver(browser, guarded, 5*time.Second).
@@ -488,7 +488,7 @@ func TestBrowserResolverReportsPageFailures(t *testing.T) {
 
 func TestBrowserResolverRefusesHostsOutsideTheAllowlist(t *testing.T) {
 	// No browser needed: the page must never be opened at all.
-	fetcher := live.NewFetcher("example.com", true, live.AllowLoopback())
+	fetcher := live.NewFetcher("example.com", live.AllowLoopback())
 	b := live.NewBrowser(live.BrowserConfig{ExecPath: "/nonexistent/chromium"}, fetcher)
 	defer b.Close()
 

@@ -267,7 +267,7 @@ func TestChooseStreamPrefersTheLiveMasterPlaylist(t *testing.T) {
 		"/tv/v/index.m3u8": "#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\nlive.ts\n",
 		"/tv/dash.mpd":     `<MPD type="dynamic"></MPD>`,
 	})
-	f := NewFetcher("", false, AllowLoopback())
+	f := NewFetcher("", AllowLoopback())
 
 	var evidence drmEvidence
 	choice, diags, err := chooseStream(context.Background(), f, []*manifestRequest{
@@ -307,7 +307,7 @@ func TestChooseStreamExplainsWhatWentWrong(t *testing.T) {
 		"/bound/master.m3u8": "403",
 		"/html/master.m3u8":  "<html>not found</html>",
 	})
-	f := NewFetcher("", false, AllowLoopback())
+	f := NewFetcher("", AllowLoopback())
 	choose := func(fetcher *Fetcher, path string) (error, []domain.ManifestDiagnostic) {
 		var evidence drmEvidence
 		_, diags, err := chooseStream(context.Background(), fetcher, []*manifestRequest{loadedRequest(srv.URL+path, 1)}, nil, 0, &evidence)
@@ -338,7 +338,7 @@ func TestChooseStreamExplainsWhatWentWrong(t *testing.T) {
 
 	// The stream's host has to be allowlisted like any other source, and the error
 	// must say which one, since it is usually a CDN the operator has never seen.
-	err, diags = choose(NewFetcher("page.example", true, AllowLoopback()), "/drm/master.m3u8")
+	err, diags = choose(NewFetcher("page.example", AllowLoopback()), "/drm/master.m3u8")
 	expect("disallowed host", err, domain.OutcomeFailed, "host_not_allowed", "LIVE_SOURCE_ALLOWED_HOSTS")
 	if diags[0].Verdict != "not_allowed" || !strings.Contains(err.Error(), "127.0.0.1") {
 		t.Errorf("disallowed host: verdict %q, error %v", diags[0].Verdict, err)
@@ -361,7 +361,7 @@ func TestChooseStreamReadsEveryRenditionBeforeAccepting(t *testing.T) {
 			"#EXTINF:6,\nhd.ts\n",
 	})
 	var evidence drmEvidence
-	_, diags, err := chooseStream(context.Background(), NewFetcher("", false, AllowLoopback()),
+	_, diags, err := chooseStream(context.Background(), NewFetcher("", AllowLoopback()),
 		[]*manifestRequest{loadedRequest(srv.URL+"/tv/master.m3u8", 1)}, nil, 0, &evidence)
 
 	if outcome, reason := failureOutcome(err); outcome != domain.OutcomeDRMProtected || reason != "renditions_protected" {

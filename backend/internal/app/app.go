@@ -137,7 +137,7 @@ func (a *App) Run() error {
 	// hold, and a page we resolve a manifest out of -- converge on one Resolver
 	// interface, so the proxy, the refresh path and the room sync behind it are
 	// written once.
-	liveFetcher := live.NewFetcher(a.Config.LiveSourceAllowedHosts, a.Config.IsProd())
+	liveFetcher := live.NewFetcher(a.Config.LiveSourceAllowedHosts)
 	liveResolvers := []live.Resolver{
 		live.NewDirectResolver(),
 		live.NewAPIResolver(liveFetcher),
