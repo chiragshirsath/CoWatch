@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/v1/:path*",
+      "destination": "https://140.238.248.49.sslip.io/api/v1/:path*"
+    },
+    {
+      "source": "/media/stream/:path*",
+      "destination": "https://140.238.248.49.sslip.io/media/stream/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
