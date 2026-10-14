@@ -13,6 +13,4 @@ ip.txt
 cloudflared.deb
 INTERVIEW_PREP.md
 
-# Oracle deployment secrets and built admin bundle
-deploy/oracle/.env.prod
-deploy/oracle/admin-dist/
+.DS_Store

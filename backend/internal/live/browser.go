@@ -418,7 +418,7 @@ func launchError(err error, stderr string, noSandbox bool) error {
 	lower := strings.ToLower(stderr)
 	if !noSandbox && (strings.Contains(lower, "namespace") || strings.Contains(lower, "sandbox")) {
 		msg += ". Chromium could not create its sandbox: allow user namespaces for this container " +
-			"(Docker's default seccomp profile blocks them; see deploy/oracle/docker-compose.prod.yml), " +
+			"(Docker's default seccomp profile blocks them), " +
 			"or set LIVE_BROWSER_NO_SANDBOX=true to run pages without it"
 	}
 	return errors.New(msg)

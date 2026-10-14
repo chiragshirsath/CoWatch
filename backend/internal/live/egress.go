@@ -17,7 +17,7 @@ import (
 //
 // The Fetcher's address guard only covers requests we make. A page's scripts choose
 // their own destinations, and the browser runs inside our network -- with host
-// networking in the Oracle deployment -- so without this any third-party script on a
+// networking in cloud deployments -- so without this any third-party script on a
 // channel page, ads included, could reach Redis, MinIO, or the cloud metadata
 // endpoint. Chromium is launched with this as its proxy for every scheme and with its
 // implicit loopback bypass removed, so each frame, worker, and redirect dials through

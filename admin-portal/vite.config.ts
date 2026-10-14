@@ -6,7 +6,7 @@ import { fileURLToPath, URL } from 'node:url'
 // https://vite.dev/config/
 export default defineConfig({
   // The portal is normally served from the root of its own origin (Vercel, or
-  // the dev server), but the Oracle deployment mounts it under /admin/ on the
+  // the dev server), but a reverse proxy deployment can mount it under /admin/ on the
   // same host as the API so the session cookie applies without a handover.
   // Asset URLs are baked in at build time, so that prefix has to be set here.
   base: process.env.ADMIN_BASE_PATH ?? '/',

@@ -99,7 +99,6 @@ backend/
 frontend/           watch-party client
 admin-portal/       operator dashboard
 deploy/
-  oracle/           single-VM production stack and CI deployment
   kubernetes/       Kustomize manifests
 ```
 
@@ -247,22 +246,19 @@ make clean   # stop containers and kill the tmux session
 
 ## Deployment
 
-The backend runs on a single Oracle Cloud Ampere (arm64) instance behind Caddy,
-which terminates TLS and serves the admin bundle. Both clients are also
-deployed to Vercel.
+### Frontend & Admin Portal (Vercel)
+Both `frontend` and `admin-portal` are deployable to Vercel:
+- **Framework Preset**: Vite
+- **Root Directory**: `frontend` (or `admin-portal`)
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- Set `VITE_API_BASE_URL` and `VITE_WS_BASE_URL` to point to your deployed backend.
 
-Pushing to `main` deploys. The workflow in `.github/workflows/ci.yml` runs lint,
-tests and typechecks, builds the backend image on a native arm64 runner,
-publishes it to GHCR tagged with the commit SHA, then pulls that tag on the host
-and restarts the stack behind a health check. Pull requests build and test but
-never deploy.
-
-The image is deliberately not built on the target: a single core makes that slow
-and a failure would leave production half-built. Compose runs with `--no-build`,
-so a missing image fails loudly instead of quietly compiling on the host.
-
-`deploy/oracle/README.md` covers first-time provisioning, the networking model,
-rollback and the manual fallback path.
+### Backend Services (Docker / Kubernetes)
+The backend service and dependencies run via Docker:
+- `docker compose up -d` boots Postgres, Redis, and MinIO.
+- Build the backend container using `docker build -t cowatch-backend ./backend`.
+- Kubernetes Kustomize manifests are available in `deploy/kubernetes`.
 
 ## Operational notes
 
